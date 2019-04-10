@@ -1,7 +1,7 @@
 $startDate = Get-Date 
 $endDate = Get-Date 31/12/2030
 $iterations = 1000
-$spotPrice = 100
+$spotPrice = 11.84
 $volatility = 0.0318
 $chinagov10y = 0.0332
 $dailyVolatility = $true
