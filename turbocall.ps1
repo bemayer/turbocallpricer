@@ -52,4 +52,4 @@ function Get-RandomNormal
     return $RandomNormal
     }
 
-$tabl | Export-Csv "C:\Users\mayer_b\Desktop\MonteCarlo\matrix.csv" -Delimiter ";"
+$tabl | Export-Csv "matrix.csv" -Delimiter ";"
