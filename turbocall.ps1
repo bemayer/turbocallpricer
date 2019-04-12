@@ -1,47 +1,31 @@
-$startDate = Get-Date 
-$endDate = Get-Date 31/12/2030
-$iterations = 1000
-$spotPrice = 11.84
-$volatility = 0.0318
-$chinagov10y = 0.0332
-$dailyVolatility = $true
+#Monte carlo iterations
+$iterations = 10000
 
 
+#Market parameters
+$spotPrice = 11.62
+$mu = 0.0318
 
-$diff = ($endDate - $startDate).Days
-if ($dailyVolatility) {$mu = $annualVolatility} else {$mu = $annualVolatility / [math]::Sqrt(252)}
-$rf = [math]::Pow(1+$chinagov10y,(1/252)) - 1
 
-$tabl = @()
-$prlt = @()
+#Options parameters
+$startDate = Get-Date (Get-Date -Format d)
+$endDate = Get-Date 30/06/2019
+$strike = 8.074509
+$barrier = 8.76
 
-for ($j=1; $j -le $iterations; $j++) {
-$prit = New-Object PSObject
-$prit | Add-Member "Iteration" ("Iteration_" + $j) 
-$prit | Add-Member "Price" ($spotprice -as [Double])
-$prlt += $prit
-}
 
-for ($i=0; $i -le $diff; $i++) {
-        if($startDate.AddDays($i).DayOfWeek -notin "Saturday", "Sunday") {
-
-        for ($j=1; $j -le $iterations; $j++) {
-
-            $Price = $prlt[($j-1)].Price
-            $Price = $Price*(1+$rf+(Get-RandomNormal)*$mu)
-            $prlt[($j-1)].Price = $Price
-            $iter = New-Object PSObject
-            $iter | Add-Member "Date" $startDate.AddDays($i).ToString("dd/MM/yyyy")
-            $iter | Add-Member "Iteration" ("Iteration_" + $j.ToString())
-            $iter | Add-Member "Price" $Price
-
-            $tabl += $iter
+#Exercise dates at end of quarters
+$firstMonthsofQuarters = (1,4,7,10)
+$exerciseDates = @()
+for ($y=$startDate.Year; $y -le ($endDate.Year+1); $y++) {
+    foreach ($m in $firstMonthsofQuarters) 
+        { 
+        $exerciseDates += (-4..-1 | % { (Get-Date (Get-Date -Year $y -Month $m -Day 1 -Format d)).AddDays($_) } | Where-Object { $_.DayOfWeek -notin 'Saturday', 'Sunday' } | Select-Object -Last 1)
         }
-
     }
-}
 
 
+#Gaussian generator
 function Get-RandomNormal
     {
     [CmdletBinding()]
@@ -52,4 +36,51 @@ function Get-RandomNormal
     return $RandomNormal
     }
 
-$tabl | Export-Csv "matrix.csv" -Delimiter ";"
+
+#Monte carlo computations
+$sumpayoff = 0
+$avgpayoff = 0
+$date = $startDate
+
+for ($i=1; $i -le $iterations; $i++) {
+
+    $price = $spotPrice
+    $payoff = $null
+    $j = 0
+
+    while($date -le $endDate -and $payoff -eq $null) {
+    
+    $date = $startDate.AddDays($j)
+
+        if($date.DayOfWeek -notin "Saturday", "Sunday") {
+            
+            $norm = Get-RandomNormal
+            $price = $price*(1+$norm*$mu)
+
+            if($price -le $barrier) {$payoff = 0}
+            if($date -in $exerciseDates -and $price -gt $strike) {$payoff = $price - $strike}
+            if($date -in $exerciseDates -and $price -le $strike) {$payoff = 0}
+
+        }
+    
+    $j++
+
+    }
+
+    if ($payoff) {$sumpayoff = $sumpayoff + $payoff}
+
+}
+
+$avgpayoff = $sumpayoff / $iterations
+
+
+#Show result
+"Turbo call estimated price:"
+$avgpayoff
+
+
+#Wait for exit
+if (!$psISE) {
+Write-Host "Press any key to exit..."
+$x = $host.ui.RawUI.ReadKey("NoEcho,IncludeKeyDown")
+}
