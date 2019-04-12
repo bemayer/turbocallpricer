@@ -1,2 +1,2 @@
 # turbocallpricer
-Basic pricer using Monte-Carlo for Turbo Calls (Knock-out Options) 
+Very basic pricer using Monte-Carlo for Turbo Calls (Knock-out Call Options) 
