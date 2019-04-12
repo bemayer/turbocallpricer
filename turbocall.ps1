@@ -9,7 +9,7 @@ $mu = 0.0318
 
 #Options parameters
 $startDate = Get-Date (Get-Date -Format d)
-$endDate = Get-Date 30/06/2019
+$endDate = Get-Date 30/06/2030
 $strike = 8.074509
 $barrier = 8.76
 
