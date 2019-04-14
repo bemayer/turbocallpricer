@@ -67,7 +67,7 @@ for ($i=1; $i -le $iterations; $i++) {
 
     }
 
-    if ($payoff) {$sumpayoff = $sumpayoff + $payoff}
+    $sumpayoff = $sumpayoff + $payoff
 
 }
 
